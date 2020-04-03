@@ -12,6 +12,7 @@ def main():
     h = w/2
 
     win = pygame.display.set_mode((w,h))
+    import pdb;pdb.set_trace()
     pygame.display.set_caption("Inverse Pendulum")
     font = pygame.font.SysFont(None, 24) 
 
@@ -50,7 +51,7 @@ def main():
     ################
 
     # velocities
-    vd = 3
+    vd = 5
     vax = 0
     vmax = np.abs(vax)
     w = 0
@@ -200,6 +201,7 @@ def main():
         do = fj * do + np.arctan2(g * np.cos(o0), ra) - dv * np.sin(o0)
         o0 += do
 
+        # log vmax
         if np.abs(vax) > vmax:
             vmax = np.abs(vax)
 
