@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-# from model import Model
+from menu import Menu
 
 
 def main():
@@ -14,7 +14,9 @@ def main():
     win = pygame.display.set_mode((w,h))
     pygame.display.set_caption("Inverse Pendulum")
     font = pygame.font.SysFont(None, 24) 
-    import pdb;pdb.set_trace()
+    menu = Menu(win, params={'abcd': (1,0,10),
+                            'HELLO': (.1,0,1.0),
+                            'KENOBI': (-10,0,10),})
 
     ##############
     ### Colors ###
@@ -29,22 +31,22 @@ def main():
     ###########################
 
     # arm radius
-    ra = w/10
+    ra = int(w/10)
     # ball radii
-    rb = w/100
+    rb = int(w/100)
     # current angle
     o0 = 0
     # angular velocity, delta theta
     do = 0
     # ball end coordinates (0: x, 1: y)
-    a0 = w/2
-    a1 = h/2 - ra
+    a0 = int(w/2)
+    a1 = int(h/2 - ra)
     b0 = a0 - int(ra * np.cos(o0))
     b1 = a1 - int(ra * np.sin(o0))
     # rail length and endpoints
-    rdx = w/3
-    r1 = (w/2 - rdx, a1)
-    r2 = (w/2 + rdx, a1)
+    rdx = int(w/3)
+    r1 = (int(w/2 - rdx), a1)
+    r2 = (int(w/2 + rdx), a1)
 
     ################
     ### Movement ###
@@ -92,21 +94,18 @@ def main():
         b0 = a0 - int(ra * np.cos(o0))
         b1 = a1 - int(ra * np.sin(o0))
 
-        # reset screen
-        win.fill(cb)
-
-        # font
-        win.blit(font.render('v={}'.format(vax), True, (0,255,0)), (20, 20))
-        win.blit(font.render('vmax={}'.format(vmax), True, (0,255,0)), (20, 40))
-        win.blit(font.render('fw={}'.format(fw), True, (0,255,0)), (20, 60))
-        dist = np.sqrt( (a0 - b0)**2 + (a1 - b1)**2)
-        if dist > rmax:
-            rmax = dist
-        elif dist < rmin:
-            rmin = dist
-        win.blit(font.render('rmax={}'.format(rmax), True, (0,255,0)), (20, 80))
-        win.blit(font.render('rmin={}'.format(rmin), True, (0,255,0)), (20, 100))
-        win.blit(font.render('do={}'.format(do), True, (0,255,0)), (20, 120))
+        # # font
+        # win.blit(font.render('v={}'.format(vax), True, (0,255,0)), (20, 20))
+        # win.blit(font.render('vmax={}'.format(vmax), True, (0,255,0)), (20, 40))
+        # win.blit(font.render('fw={}'.format(fw), True, (0,255,0)), (20, 60))
+        # dist = np.sqrt( (a0 - b0)**2 + (a1 - b1)**2)
+        # if dist > rmax:
+        #     rmax = dist
+        # elif dist < rmin:
+        #     rmin = dist
+        # win.blit(font.render('rmax={}'.format(rmax), True, (0,255,0)), (20, 80))
+        # win.blit(font.render('rmin={}'.format(rmin), True, (0,255,0)), (20, 100))
+        # win.blit(font.render('do={}'.format(do), True, (0,255,0)), (20, 120))
 
         # rail
         pygame.draw.line(win, clg, r1, r2, 3)
@@ -126,6 +125,9 @@ def main():
         # delta T = 40 ms -> 25fps
         pygame.time.delay(timescale)        
 
+        # reset screen
+        win.fill(cb)
+
         # #################
         # ### NN Inputs ###
         # #################
@@ -144,14 +146,14 @@ def main():
         ### Menu updates ###
         ####################
 
-        events = pygame.event.get()
         mouse_down = False
-        for event in events:
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_down = True
-                # menu.update()
+
+        menu.update(md=mouse_down)
 
 
         ###################
