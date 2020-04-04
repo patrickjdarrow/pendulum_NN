@@ -12,9 +12,9 @@ def main():
     h = int(w/2)
 
     win = pygame.display.set_mode((w,h))
-    import pdb;pdb.set_trace()
     pygame.display.set_caption("Inverse Pendulum")
     font = pygame.font.SysFont(None, 24) 
+    import pdb;pdb.set_trace()
 
     ##############
     ### Colors ###
@@ -124,26 +124,34 @@ def main():
 
     while True:
         # delta T = 40 ms -> 25fps
-        pygame.time.delay(timescale)
+        pygame.time.delay(timescale)        
 
-        for event in pygame.event.get():
+        # #################
+        # ### NN Inputs ###
+        # #################
+
+        # # normalized distance from A to center, [-1, 1]
+        # center_dist = 2 * (a0 - r1[0]) / rdx - 1
+        # # normalized unit distances from A to B, [-1, 1]
+        # ball_dx = (b0 - a0) / ra
+        # ball_dy = (b1 - a1) / ra
+        # # horizontal velocity of A / 100
+        # horizontal_vel = vax / 100
+        # # angular velocity
+        # angular_vel = o0  
+
+        ####################
+        ### Menu updates ###
+        ####################
+
+        events = pygame.event.get()
+        mouse_down = False
+        for event in events:
             if event.type == pygame.QUIT:
                 pygame.quit()
-        
-
-        #################
-        ### NN Inputs ###
-        #################
-
-        # normalized distance from A to center, [-1, 1]
-        center_dist = 2 * (a0 - r1[0]) / rdx - 1
-        # normalized unit distances from A to B, [-1, 1]
-        ball_dx = (b0 - a0) / ra
-        ball_dy = (b1 - a1) / ra
-        # horizontal velocity of A / 100
-        horizontal_vel = vax / 100
-        # angular velocity
-        angular_vel = o0
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_down = True
+                # menu.update()
 
 
         ###################
