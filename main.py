@@ -8,8 +8,8 @@ def main():
 
     timescale = 40
 
-    w = 1500
-    h = w/2
+    w = int(1500)
+    h = int(w/2)
 
     win = pygame.display.set_mode((w,h))
     import pdb;pdb.set_trace()

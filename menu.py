@@ -2,6 +2,66 @@ import pygame
 import numpy as np
 # from model import Model
 
+class menu(win):
+    def __init__(self, pos=0, sf=0.15, padding=20):
+    ''' Standalone multi-slider menu
+    #TODO:
+
+    Args:
+        pos {int}
+            Menu position
+            0: upper left
+            1: upper right
+            2: lower left
+            4: lower right
+        sf {float}
+            Slider size scale factor, relative to window size
+        padding {int}
+            pixel padding
+
+    '''
+
+        self.win = win
+        self.w = self.win.get_bounding_rect()[2]
+        self.h = self.win.get_bounding_rect()[3]
+        self.sf = sf
+        self.padding = padding
+        self.pos = pos
+        self._init()
+        
+
+    def update(self, mpos=None):
+        ''' 
+        Uses mouse state to update menu 
+        '''
+        if not mpos:
+            mpos = pygame.mouse.get_pos()
+
+    def _init(self):
+        '''
+        Creates a blueprint for slider spacing based on pos
+        '''
+
+        if self.pos in [0, 2]:
+            self.x1 = self.padding 
+            self.dx = 1
+        elif self.pos in [1, 3]:
+            self.x1 = self.w - self.padding
+            self.dx = -1
+        else:
+            raise AttributeError
+        if self.pos in [0, 1]:
+            self.y1 = self.padding
+            self.dy = 1
+        else:
+            self.y1 = self.h - self.padding
+            self.dy = -1
+
+
+
+
+
+
 
 def main():
     pygame.init()
