@@ -22,6 +22,10 @@ class Menu():
         - Args
             win: pygame.display
                 - Pygame window which will serve as the display canvas
+            w: int
+                - Pygame window width
+            h: int
+                - Pygame window height
             params: dict {'value name': (cur, min, max)}
                 - Dictionary mapping values to their ranges 
                 - ex: params =  {'friction': (0.2, 0.0, 1.0),
@@ -91,7 +95,10 @@ class Menu():
 
     def update(self):
         ''' 
-        Uses mouse state to update menu. 
+        - Uses mouse state to update menu. 
+        
+        Returns:
+            updated values: list
 
         '''
         values = []
