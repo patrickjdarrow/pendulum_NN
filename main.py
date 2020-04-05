@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 from display import Menu
+from model import Seq
 
 
 def main():
@@ -90,6 +91,12 @@ def main():
     #                     'fr': (fr,0,10),
     #                     'fj': (fj, 0.8,1.1),})
 
+    #############
+    ### Model ###
+    #############
+
+    model = Seq()
+
     #################################
     ### Draw rail, pendulum, text ###
     #################################
@@ -128,6 +135,8 @@ def main():
     ### game state loop ###
     #######################
 
+    
+
     while True:
         # delta T = 40 ms -> 25fps
         pygame.time.delay(timescale)        
@@ -135,19 +144,30 @@ def main():
         # reset screen
         win.fill(cb)
 
-        # #################
-        # ### NN Inputs ###
-        # #################
+        ##############
+        ### NN IOs ###
+        ##############
 
-        # # normalized distance from A to center, [-1, 1]
-        # center_dist = 2 * (a0 - r1[0]) / rdx - 1
-        # # normalized unit distances from A to B, [-1, 1]
-        # ball_dx = (b0 - a0) / ra
-        # ball_dy = (b1 - a1) / ra
-        # # horizontal velocity of A / 100
-        # horizontal_vel = vax / 100
-        # # angular velocity
-        # angular_vel = o0  
+        # normalized distance from A to center, [-1, 1]
+        center_dist = (a0 - r1[0]) / rdx - 1
+        # normalized unit distances from A to B, [-1, 1]
+        ball_dx = (float(b0) - a0) / ra
+        ball_dy = (float(b1) - a1) / ra
+        # horizontal velocity of A / 100
+        horizontal_vel = float(vax) / 100
+        # angular velocity
+        angular_vel = float(o0) / np.pi
+
+        inputs = np.array([[center_dist,
+                                    ball_dy,
+                                    ball_dx,
+                                    horizontal_vel,
+                                    angular_vel]])
+
+        # 0 = left
+        # 1 = no move
+        # 2 = right
+        out = model.pred(inputs)
 
         ####################
         ### Menu updates ###
@@ -160,9 +180,9 @@ def main():
         # g, fr, fj = menu.update()
 
 
-        ###################
-        ### vax updates ###
-        ###################
+        ##############################
+        ### input response updates ###
+        ##############################
 
         # asssess key presses
         keys = pygame.key.get_pressed()
@@ -185,6 +205,31 @@ def main():
             else:
                 vax = 0
                 dv = 0
+
+        # ###########################
+        # ### NN response updates ###
+        # ###########################
+
+        # # left
+        # if out == 0:
+        #     vax -= vd
+        #     dv = -vd
+        # # right
+        # elif out ==2:
+        #     vax += vd
+        #     dv = vd
+        # # out == 1
+        # # decelerate 
+        # else:
+        #     if vax >= fr:
+        #         vax -= fr
+        #         dv = -fr
+        #     elif vax <= -fr:
+        #         vax += fr
+        #         dv = fr
+        #     else:
+        #         vax = 0
+        #         dv = 0
 
         ########################
         ### position updates ###
