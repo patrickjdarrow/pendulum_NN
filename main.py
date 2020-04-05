@@ -14,12 +14,6 @@ def main():
     win = pygame.display.set_mode((w,h))
     pygame.display.set_caption("Inverse Pendulum")
     font = pygame.font.SysFont(None, 24) 
-    menu = Menu(win, 
-                w,
-                h,
-                params={'abcd': (1,0,10),
-                        'HELLO': (.1,0,1.0),
-                        'KENOBI': (-10,0,10),})
 
     ##############
     ### Colors ###
@@ -59,7 +53,6 @@ def main():
     vd = 5
     vax = 0
     vmax = np.abs(vax)
-    w = 0
     dv = 0
     adv = 0.0035
     # friction due to wall (inelastic collision)
@@ -85,6 +78,17 @@ def main():
     #################
 
     load_weights = True
+
+    #################
+    ### Load Menu ###
+    #################
+
+    # menu = Menu(win=win, 
+    #             w=w,
+    #             h=h,
+    #             params={'g': (g,0,-10),
+    #                     'fr': (fr,0,10),
+    #                     'fj': (fj, 0.8,1.1),})
 
     #################################
     ### Draw rail, pendulum, text ###
@@ -113,9 +117,9 @@ def main():
         # rail
         pygame.draw.line(win, clg, r1, r2, 3)
         # a
-        pygame.draw.circle(win, cdg, (a0, a1), rb)
+        pygame.draw.circle(win, cdg, (int(a0), a1), rb)
         # b
-        pygame.draw.circle(win, cdg, (b0, b1), rb)
+        pygame.draw.circle(win, cdg, (int(b0), b1), rb)
         # # arm
         pygame.draw.line(win, cdg, (a0, a1), (b0, b1), 5)
 
@@ -153,7 +157,7 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-        menu.update()
+        # g, fr, fj = menu.update()
 
 
         ###################
@@ -188,7 +192,7 @@ def main():
 
         # check boundary conditions for A and update
         if vax < 0 and a0 + vax <= r1[0]:
-            a0 = r1[0]
+            a0 = int(r1[0])
             dv = -vax
             vax = int(-fw * vax)
             dv += vax 
