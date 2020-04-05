@@ -17,6 +17,7 @@ class Menu():
         #TODO:
             1) create pause scheme in main
             2) generalize collision fn
+            3) accomodate int rounding for sliders
 
         - Args
             win: pygame.display
