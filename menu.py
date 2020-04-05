@@ -77,7 +77,7 @@ class Menu():
 
             val = self.min + self.range * (self.x-self.xbounds[0])/(self.sw)
 
-            if type(self.x)==int:
+            if type(self.var)==int:
                 val = int(val)
 
             pygame.draw.rect(self.win,

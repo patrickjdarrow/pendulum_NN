@@ -59,7 +59,7 @@ def main():
     fw = 0.45
     # friction due to rail (deceleration constant)
     fr = 2
-    # friction at the join of a (angular deceleration)
+    # friction at the join of a (fractional angular velocity retention)
     fj = 0.991
     # gravity
     g = - 4
