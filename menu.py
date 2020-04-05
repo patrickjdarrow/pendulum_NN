@@ -3,6 +3,8 @@ import pygame
 class Menu():
     def __init__(self,
                 win,
+                w,
+                h,
                 params,
                 sf=0.10,
                 padding=20,
@@ -33,25 +35,44 @@ class Menu():
 
         self.win = win
         self.params = params
-        self.w = self.win.get_bounding_rect()[2]
-        self.h = self.win.get_bounding_rect()[3]
+        self.w = w
+        self.h = h
         self.sw = int(sf * self.w)
         self.padding = padding
         self.fontsize = fontsize
         # slider height
-        self.sh = 35
+        self.sh = 25
+        # number of drawers
+        self.nd = len(self.params)
 
         self._init_blueprints()
 
         # mouse state (clicked, not clicked)
         self.ms = False
-        # last mouse state
-        self.lms = False
-        # index of slider currently being clicked
-        self.clicked = -1
+
+        self.update()
+
+    class _Drawer():
+        def __init__(self, win, x, y, width, height, range, color=(0,255,0)):
+            self.win = win
+            self.x = x
+            self.y = y
+            self.width = width
+            self.height = height
+            self.color = color
+            self.min = range[0]
+            self.max = range[1]
+            self.range = self.max - self.min
+
+        def update(self, x=None):
+            if self.x != x:
+                self.x = x
+            pygame.draw.rect(self.win,
+                            self.color,
+                            (self.x,self.y,self.width,self.height))
 
 
-    def update(self, md=False):
+    def update(self):
         ''' 
         Uses mouse state to update menu. 
 
@@ -65,31 +86,33 @@ class Menu():
                     menu.update(md=mouse_down)
 
         '''
-        self.ms = md
-        mpos = pygame.mouse.get_pos()
+        # get mouse state
+        self.ms = pygame.mouse.get_pressed()[0]
+        if self.ms:
+            mpos = pygame.mouse.get_pos()
 
-        # draw slider rails
-        for i, param in enumerate(self.params, start=1):
-            if i == self.clicked:
-                pass
+        # refresh rails and update sliders
+        self._draw_lines()
+        for i, knob in enumerate(self.knobs):
+            # update slider coordinates
+            if self.ms and self._check_collision(mpos, knob):
+                dx = self._constrain(mpos[0], self.x1, self.x2)
             else:
-                cx = self.x1 + int(self.sw * )
-            cy = i * self.sh
-            pygame.draw.line(self.win,
-                            (0,225, 0),
-                            (self.x1, cy),
-                            (self.x2, cy))
-            center = ()
+                # dx = int(self.x1 + 
+                #         self.sw * self.params[param][0] /
+                #         (self.params[param][2] - self.params[param][1]))
+                dx = knob.x
 
-
-        # mouse state machine
-
-        self.lms = self.ms
+            self.knobs[i].update(dx)
 
         return None
 
-    def _bound(self, a, b, c):
-        pass
+    def _constrain(self, a, min, max):
+        if a < min:
+            return min
+        elif a > max:
+            return max
+        return a
 
 
     def _init_blueprints(self):
@@ -106,22 +129,32 @@ class Menu():
 
         self.x1 = self.padding 
         self.x2 = self.padding + self.sw
-        self.y1 = self.padding 
 
-        self.knobs = [pygame.draw.rect(
-                            self.win,
-                            (0,255,0),
-                            (self.x1,
-                                self.padding + i * 2 * self.sh,
-                                int(self.sh/3),
-                                self.sh))
-                        for i in len(params)]
-        self.rails = [pygame.draw.line(
-                            self.win,
-                            (0,225,0),
-                            (self.x1,
-                                self.padding + i * 2 * self.sh + int(self.sh/2)),
-                            (self.x2 + int(self.sh/3),
-                                self.padding + i * 2 * self.sh + int(self.sh/2)))
-                        for i in len(params)]
-        self.update()
+        self.knobs = [self._Drawer(
+                            win=self.win,
+                            x=self.x1,
+                            y=self.padding + i * 2 * self.sh,
+                            width=int(self.sh/5),
+                            height=self.sh,
+                            range=(self.params[param][1], self.params[param][2]),
+                            color=(0,255,0))
+                        for i, param in enumerate(self.params)]
+
+    def _draw_lines(self):
+        # rails extend from x1 to x2 + knob width
+        for i in range(self.nd):
+            pygame.draw.line(
+                    self.win,
+                    (0,225,0),
+                    (self.x1,
+                        self.padding + i * 2 * self.sh + int(self.sh/2)),
+                    (self.x2 + int(self.sh/3),
+                        self.padding + i * 2 * self.sh + int(self.sh/2)))
+
+    def _check_collision(self, mpos, knob):
+        if mpos[0] > self.x1-25 and \
+            mpos[0] < self.x2+25 and \
+            mpos[1] > knob.y-15 and \
+            mpos[1] < knob.y+knob.height+15:
+            return True
+        return False

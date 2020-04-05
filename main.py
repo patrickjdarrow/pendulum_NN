@@ -14,9 +14,12 @@ def main():
     win = pygame.display.set_mode((w,h))
     pygame.display.set_caption("Inverse Pendulum")
     font = pygame.font.SysFont(None, 24) 
-    menu = Menu(win, params={'abcd': (1,0,10),
-                            'HELLO': (.1,0,1.0),
-                            'KENOBI': (-10,0,10),})
+    menu = Menu(win, 
+                w,
+                h,
+                params={'abcd': (1,0,10),
+                        'HELLO': (.1,0,1.0),
+                        'KENOBI': (-10,0,10),})
 
     ##############
     ### Colors ###
@@ -146,14 +149,11 @@ def main():
         ### Menu updates ###
         ####################
 
-        mouse_down = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_down = True
 
-        menu.update(md=mouse_down)
+        menu.update()
 
 
         ###################
