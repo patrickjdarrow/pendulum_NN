@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-from menu import Menu
+from display import Menu
 
 
 def main():
