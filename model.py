@@ -12,8 +12,8 @@ from keras.layers import Dense
 class Seq(Sequential):
 	def __init__(self):
 		super(Seq, self).__init__()
-		self.add(Dense(100, input_dim=5, activation='relu'))
-		self.add(Dense(100, activation='relu'))
+		self.add(Dense(5, input_dim=5, activation='relu'))
+		self.add(Dense(5, activation='relu'))
 		self.add(Dense(3, activation='softmax'))
 
 	def pred(self, inputs):
