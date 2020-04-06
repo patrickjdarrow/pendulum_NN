@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn
+import multiprocessing
 
 plt.rcParams['figure.figsize'] = 16, 13
 
@@ -21,14 +22,12 @@ class Pop():
                popsize,
                model,
                ngen,
-               fitness_fn=None,
                elitesize=0.1,
                early_stop=False
                ):
     # Set population parameters
     self.popsize = popsize
     self.ngen = ngen
-    self.fitness_fn = fitness_fn
     self.elitesize = elitesize
     self.n_elites = int(self.popsize * self.elitesize)
     self.n_nonelites = self.popsize - self.n_elites
@@ -41,7 +40,7 @@ class Pop():
     self.n_traits = np.sum([np.prod(layer.shape) for layer in model.get_weights()])
     self.pop = self.init_pop()
     self.scores = np.ndarray(self.popsize)
-    self.update_scores()
+    self._update_scores()
     self.pop_history = [self.pop]
 
     self.fig = plt.figure()
@@ -52,35 +51,32 @@ class Pop():
     return 2 * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + 6 * np.pi
 
   # Test surfaces: 
-  def eval1(self, x, y):
+  def _eval1(self, x, y):
     # ripple
     sqsum = (np.power(x, 2) + \
             np.power(y, 2)) * 0.2
     return ((np.power(np.cos(2 * np.sqrt(sqsum)), 2) + 2)) * np.exp(-0.01*sqsum) 
-  def eval2(self, x, y):
+  def _eval2(self, x, y):
     # ripple
     sqsum = (np.power(x, 2) + \
             np.power(y, 2)) * 0.2
     return ((np.power(np.cos(.2 * sqsum), 2) + 2)) * np.exp(-0.01*sqsum) 
 
-  # Sequential eval
-  def sequential_eval(self, x, fn):
-    '''TODO: 
-      1) Thread
-      2) docstring for this fn'''
-    return np.array([fn(xn) for xn in x])
-
   # Update population scores in place and order population
-  def update_scores(self):
-    if self.fitness_fn:
-      self.scores = np.array([self.fitness_fn(ind) for ind in pop])
-      
+  def _update_scores(self, fitness_fn=None, multiprocess=False):
+    if fitness_fn:
+      if multiprocess:
+        # p = multiprocessing.Pool(multiprocessing.cpu_count())
+        # self.scores = np.array(p.map(fitness_fn, [ind for ind in self.pop]))
+        self.scores = np.array([fitness_fn(ind) for ind in self.pop])
+      else:
+        self.scores = fitness_fn(self.pop)
     else:
-      self.scores = self.eval2(self.pop[:,0], self.pop[:,1])
+      self.scores = self._eval2(self.pop[:,0], self.pop[:,1])
                         
     order = np.argsort(self.scores).reshape(self.popsize, 1)
     self.pop = np.take_along_axis(self.pop, order, axis=0)
-  
+
   @property
   def get_scores(self):
     return self.scores
@@ -88,17 +84,16 @@ class Pop():
   # TODO: replace plotting with logging
   # TODO: assign replacement scheme for each strat
   def evolve(self,
-             plot_fitness=False,
-             ):
+            fitness_fn=None,
+            multiprocess=False,
+            plot_fitness=False,):
     
     starting_gen = self.generation
-
-    # fittest = []
     averages = []
 
     for gen in range(1, self.ngen+1):
-
-      self.update_scores()
+      self._update_scores(fitness_fn=fitness_fn, multiprocess=multiprocess)
+      print(f'ngen: {gen}, fittest: {self.scores[0]}')
       
       if plot_fitness:
         plt.scatter([self.generation]*self.popsize, self.scores)
@@ -118,7 +113,7 @@ class Pop():
       std = np.array([lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
       self.pop += std * (np.random.random((self.popsize, self.n_traits)) - 0.5)
       
-      self.update_scores()
+      self._update_scores()
       self.generation += 1
       self.pop_history.append(self.pop)
 
@@ -146,7 +141,7 @@ class Pop():
     x = np.linspace(-lim, lim, intervals)
     y = np.linspace(-lim, lim, intervals)
     X, Y = np.meshgrid(x, y)
-    Z = self.eval2(X,Y)
+    Z = self._eval2(X,Y)
     plt.contourf(X, Y, Z, 12, cmap='cubehelix')
     plt.colorbar()
     # plt.imshow(Z, extent=[-lim, lim, -lim, lim], cmap='cubehelix')

@@ -6,7 +6,6 @@ from pop import Pop
 from debug import db
 from game import Pendulum
 
-
 def main():
 
     ###########################
@@ -22,10 +21,11 @@ def main():
 
     pop = Pop(popsize=10,
                 model=model,
-                ngen=100,
-                elitesize=0.1,
-                lambda x: p.nn(train=True,
-                                ind=x))
+                ngen=2,
+                elitesize=0.1)
+
+    fitness_fn = lambda ind: p.nn(train=True, ind=ind)
+    pop.evolve(fitness_fn=fitness_fn, multiprocess=True)
 
 if __name__ == '__main__':
     main()

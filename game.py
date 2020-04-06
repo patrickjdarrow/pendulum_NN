@@ -9,19 +9,8 @@ class Pendulum():
 
     def __init__(self, model=None):
         self.model = model
-    
-    def train(self, pop):
-        '''
-        - Evaluates a population's fitness
-        
-        - Args
-            model: keras.models.Sequential()
-            pop: GAES.pop.Pop()
-        '''
 
-        pass
-
-    def nn(self, train=False):
+    def nn(self, train=False, ind=None):
         '''
         - Plays the game with a neural net player
         
@@ -32,10 +21,19 @@ class Pendulum():
         Returns:
             np array of fitness scores
         '''
+        if train:
+            new_parameters = []
+            param_idx = 0
+            for i, layer in enumerate(self.model.get_weights()):
+                num_parameters_taken = np.prod(layer.shape)
+                new_parameters.append(ind[param_idx:param_idx+num_parameters_taken].reshape(layer.shape))
+                param_idx += num_parameters_taken
 
-        return self.play(play=train)
+            self.model.set_weights(new_parameters)
 
-    def play(self, play=True, ticks=1):
+        return self.play(_play=not train)
+
+    def play(self, _play=True, ticks=350):
 
         pygame.init()
 
@@ -44,7 +42,6 @@ class Pendulum():
 
         fitness = 0
         fitness_loc = (0.9*w, 0.05*h)
-        ticks = 350
 
         win = pygame.display.set_mode((w,h))
         pygame.display.set_caption("Inverse Pendulum")
@@ -103,15 +100,8 @@ class Pendulum():
         #################
 
         #TODO: get rid of globals
-        global rmin, rmax
         rmin = np.sqrt( (a0 - b0)**2 + (a1 - b1)**2)
         rmax = rmin
-
-        #################
-        ### NN Params ###
-        #################
-
-        load_weights = True
 
         #################
         ### Load Menu ###
@@ -125,27 +115,6 @@ class Pendulum():
                             'fj': (fj, 0.8,1.1),
                             'fw': (fw, 0, 1)})
 
-        #################################
-        ### Draw rail, pendulum, text ###
-        #################################
-
-        def draw():
-
-            global rmin, rmax
-            # update B
-            b0 = a0 - int(ra * np.cos(o0))
-            b1 = a1 - int(ra * np.sin(o0))
-            # fitness
-            win.blit(font.render('fitness={}'.format(fitness), True, (0,255,0)), fitness_loc)
-            # rail
-            pygame.draw.line(win, clg, r1, r2, 3)
-            # a
-            pygame.draw.circle(win, cdg, (int(a0), a1), rb)
-            # b
-            pygame.draw.circle(win, cdg, (int(b0), b1), rb)
-            # # arm
-            pygame.draw.line(win, cdg, (a0, a1), (b0, b1), 5)
-
 
         #######################
         ### game state loop ###
@@ -156,8 +125,7 @@ class Pendulum():
         # for tick in range(ticks):
         while True:
             # delta T = 40 ms -> 25fps
-            if play:
-                pygame.time.delay(40)        
+            pygame.time.delay(40 * _play)        
 
             # reset screen
             win.fill(cb)
@@ -177,13 +145,6 @@ class Pendulum():
             angular_vel = float(o0) / np.pi
 
             param_idx = 0
-            # for i, layer in enumerate(model.get_weights()):
-            #     num_parameters_taken = np.prod(layer.shape)
-            #     new_parameters.append(parameters[param_idx:param_idx+num_parameters_taken].reshape(layer.shape))
-            #     param_idx += num_parameters_taken
-
-            # Set Weights using individual
-            # model.set_weights(new_parameters)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -194,7 +155,7 @@ class Pendulum():
             ### input/NN response updates ###
             #################################
 
-            if play:
+            if _play:
                 g, fr, fj, fw = menu.update()
                 keys = pygame.key.get_pressed()
                 left = keys[pygame.K_LEFT]
@@ -205,7 +166,7 @@ class Pendulum():
                                             ball_dx,
                                             horizontal_vel,
                                             angular_vel]])
-                out = model.pred(inputs)
+                out = self.model.pred(inputs)
                 left = out==0
                 right = out==2
 
@@ -262,13 +223,25 @@ class Pendulum():
             ### pygame updates ###
             ######################
 
-            draw()
+            # update B
+            b0 = a0 - int(ra * np.cos(o0))
+            b1 = a1 - int(ra * np.sin(o0))
+            # fitness
+            win.blit(font.render('fitness={}'.format(fitness), True, (0,255,0)), fitness_loc)
+            # rail
+            pygame.draw.line(win, clg, r1, r2, 3)
+            # a
+            pygame.draw.circle(win, cdg, (int(a0), a1), rb)
+            # b
+            pygame.draw.circle(win, cdg, (int(b0), b1), rb)
+            # # arm
+            pygame.draw.line(win, cdg, (a0, a1), (b0, b1), 5)
 
             pygame.display.update() 
 
-            if not play:
+            if not _play:
                 ticks -= 1
                 if not ticks:
                     pygame.quit()
+                    return fitness
 
-                
