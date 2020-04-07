@@ -12,10 +12,24 @@ from keras.layers import Dense
 class Seq(Sequential):
 	def __init__(self):
 		super(Seq, self).__init__()
-		self.add(Dense(5, input_dim=5, activation='relu'))
-		self.add(Dense(5, activation='relu'))
+
+		# hidden layers
+		self.add(Dense(100, input_dim=5, activation='tanh'))
+		self.add(Dense(50, activation='tanh'))
+		self.add(Dense(10, activation='tanh'))
+		# output layer
 		self.add(Dense(3, activation='softmax'))
 
 	def pred(self, inputs):
 		out = self.predict(inputs, verbose=0)[0]
 		return np.where(out==np.max(out))[0][0]
+
+	def _set_weights(self, ind):
+            new_parameters = []
+            param_idx = 0
+            for i, layer in enumerate(self.get_weights()):
+                num_parameters_taken = np.prod(layer.shape)
+                new_parameters.append(ind[param_idx:param_idx+num_parameters_taken].reshape(layer.shape))
+                param_idx += num_parameters_taken
+
+            self.set_weights(new_parameters)

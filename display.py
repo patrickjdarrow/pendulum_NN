@@ -41,7 +41,6 @@ class Menu():
 
         self.win = win
         self.params = params
-        print(self.params)
         self.w = w
         self.h = h
         self.sw = int(sf * self.w)

@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import seaborn
 import multiprocessing
 
+from debug import db
+
 plt.rcParams['figure.figsize'] = 16, 13
 
 np.random.seed(1)
@@ -22,33 +24,47 @@ class Pop():
                popsize,
                model,
                ngen,
+               lr = 1.0,
                elitesize=0.1,
-               early_stop=False
+               weight_domain=[6*np.pi+1, 6*np.pi-1],
+               early_stop=False,
+               seed_arr=None,
                ):
+    '''
+    #TODO
+      1) better logging
+    '''
+
     # Set population parameters
     self.popsize = popsize
     self.ngen = ngen
+    self.lr = lr
     self.elitesize = elitesize
-    self.n_elites = int(self.popsize * self.elitesize)
-    self.n_nonelites = self.popsize - self.n_elites
     self.early_stop = early_stop
+    self.seed_arr = seed_arr
 
     # Track current generation
     self.generation = 0
 
     # Initialize population with n_traits
+    self.weight_domain = weight_domain
     self.n_traits = np.sum([np.prod(layer.shape) for layer in model.get_weights()])
-    self.pop = self.init_pop()
+    self.pop = self._reset_pop()
     self.scores = np.ndarray(self.popsize)
-    self._update_scores()
-    self.pop_history = [self.pop]
+    self.fittest = None
+    self.fittest_score = None
 
-    self.fig = plt.figure()
-    self.ims = []
-  
-  def init_pop(self):
+  def _reset_pop(self):
+    self.n_elites = int(self.popsize * self.elitesize); assert self.n_elites >=2
+    self.n_nonelites = self.popsize - self.n_elites; assert self.n_nonelites >=1
     self.generation = 0
-    return 2 * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + 6 * np.pi
+    r = np.ptp(self.weight_domain)
+    m = np.mean(self.weight_domain)
+    pop = r * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + m
+    if self.seed_arr:
+      print(f'Seeding: {self.seed_arr}')
+      pop[0] = np.load(f'checkpoints/{self.seed_arr}')
+    return pop
 
   # Test surfaces: 
   def _eval1(self, x, y):
@@ -73,32 +89,43 @@ class Pop():
         self.scores = fitness_fn(self.pop)
     else:
       self.scores = self._eval2(self.pop[:,0], self.pop[:,1])
-                        
-    order = np.argsort(self.scores).reshape(self.popsize, 1)
-    self.pop = np.take_along_axis(self.pop, order, axis=0)
+
+    order = np.argsort(self.scores).reshape((self.popsize))
+    self.pop = self.pop[order]
+    self.scores = self.scores[order]
+
+    if self.fittest_score:
+      if self.scores[-1] > self.fittest_score:
+        self.fittest_score = self.scores[-1]
+        self.fittest = self.pop[-1]
+        print(f'Saving: {self.fittest_score}.npy')
+        np.save(f'checkpoints/{self.fittest_score}', self.fittest)
+    else:
+      self.fittest_score = self.scores[-1]
+      self.fittest = self.pop[-1]
+      print(f'Saving: {self.fittest_score}.npy')
+      np.save(f'checkpoints/{self.fittest_score}', self.fittest)
 
   @property
   def get_scores(self):
     return self.scores
 
-  # TODO: replace plotting with logging
   # TODO: assign replacement scheme for each strat
   def evolve(self,
             fitness_fn=None,
             multiprocess=False,
             plot_fitness=False,):
-    
+
     starting_gen = self.generation
     averages = []
 
     for gen in range(1, self.ngen+1):
       self._update_scores(fitness_fn=fitness_fn, multiprocess=multiprocess)
-      print(f'ngen: {gen}, fittest: {self.scores[0]}')
       
-      if plot_fitness:
-        plt.scatter([self.generation]*self.popsize, self.scores)
-        averages.append(np.mean(self.scores))
-        # fittest.append(np.max(self.scores)) 
+      # if plot_fitness:
+      #   plt.scatter([self.generation]*self.popsize, self.scores)
+      #   averages.append(np.mean(self.scores))
+      #   fittest.append(np.max(self.scores)) 
     
       # Replace the nonelite
       elites = self.pop[-self.n_elites:]
@@ -109,29 +136,29 @@ class Pop():
                                   ).reshape((self.n_nonelites, self.n_traits))
       
       # Mutate population with noise = lr*std(axis)
-      lr = 1
-      std = np.array([lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
-      self.pop += std * (np.random.random((self.popsize, self.n_traits)) - 0.5)
-      
-      self._update_scores()
+      #TODO: replace std calculation with np.along_axis
+      std = np.array([self.lr * np.std(self.pop[:-1,i]) for i in range(self.n_traits)])
+      self.pop[:-1] += std * (np.random.random((self.popsize-1, self.n_traits)) - 0.5)
+
+      print(f'ngen: {gen}, fittest: {np.max(self.scores)}, avg: {np.mean(self.scores)}')
       self.generation += 1
-      self.pop_history.append(self.pop)
+
+      #Logging
+
 
       # TODO:
       # implement early stopping
 
     # Lay over average and fittest lines
-    if plot_fitness:
-      plt.xlabel('Generation')
-      plt.ylabel('Fitness')
-      plt.title('Generation vs. Fitness')
-      # plt.plot([*range(starting_gen, self.generation)], fittest, color='g')
-      plt.plot([*range(starting_gen, self.generation)], averages, color='r')
+    # if plot_fitness:
+    #   plt.xlabel('Generation')
+    #   plt.ylabel('Fitness')
+    #   plt.title('Generation vs. Fitness')
+    #   # plt.plot([*range(starting_gen, self.generation)], fittest, color='g')
+    #   plt.plot([*range(starting_gen, self.generation)], averages, color='r')
 
   # Call after evolving n generations
   def show_weights(self):
-    # TODO: 
-    # gif evolution
 
     xs = self.pop[:,0]
     ys = self.pop[:,1]

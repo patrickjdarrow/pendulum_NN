@@ -6,9 +6,22 @@ from pop import Pop
 from debug import db
 
 class Pendulum():
+    '''
+    #TODO:
+        1) implement board reset so pygame doesn't have to load/quit/reload...
+    '''
 
     def __init__(self, model=None):
         self.model = model
+
+        pygame.init()
+
+        self.w = int(1500)
+        self.h = int(self.w/2)
+
+        self.win = pygame.display.set_mode((self.w,self.h))
+        pygame.display.set_caption("Inverse Pendulum")
+        self.font = pygame.font.SysFont(None, 24) 
 
     def nn(self, train=False, ind=None):
         '''
@@ -21,31 +34,14 @@ class Pendulum():
         Returns:
             np array of fitness scores
         '''
-        if train:
-            new_parameters = []
-            param_idx = 0
-            for i, layer in enumerate(self.model.get_weights()):
-                num_parameters_taken = np.prod(layer.shape)
-                new_parameters.append(ind[param_idx:param_idx+num_parameters_taken].reshape(layer.shape))
-                param_idx += num_parameters_taken
+        self.model._set_weights(ind)
 
-            self.model.set_weights(new_parameters)
+        return self.play(play=not train, nn=True)
 
-        return self.play(_play=not train)
-
-    def play(self, _play=True, ticks=350):
-
-        pygame.init()
-
-        w = int(1500)
-        h = int(w/2)
+    def play(self, play=True, nn=True, ticks=250):
 
         fitness = 0
-        fitness_loc = (0.9*w, 0.05*h)
-
-        win = pygame.display.set_mode((w,h))
-        pygame.display.set_caption("Inverse Pendulum")
-        font = pygame.font.SysFont(None, 24) 
+        fitness_loc = (0.9*self.w, 0.05*self.h)
 
         ##############
         ### Colors ###
@@ -60,22 +56,22 @@ class Pendulum():
         ###########################
 
         # arm radius
-        ra = int(w/10)
+        ra = int(self.w/10)
         # ball radii
-        rb = int(w/100)
+        rb = int(self.w/100)
         # current angle
-        o0 = 0
+        o0 = -np.pi/2
         # angular velocity, delta theta
         do = 0
         # ball end coordinates (0: x, 1: y)
-        a0 = int(w/2)
-        a1 = int(h/2 - ra)
+        a0 = int(self.w/2)
+        a1 = int(self.h/2 - ra)
         b0 = a0 - int(ra * np.cos(o0))
         b1 = a1 - int(ra * np.sin(o0))
         # rail length and endpoints
-        rdx = int(w/3)
-        r1 = (int(w/2 - rdx), a1)
-        r2 = (int(w/2 + rdx), a1)
+        rdx = int(self.w/3)
+        r1 = (int(self.w/2 - rdx), a1)
+        r2 = (int(self.w/2 + rdx), a1)
 
         ################
         ### Movement ###
@@ -107,13 +103,14 @@ class Pendulum():
         ### Load Menu ###
         #################
 
-        menu = Menu(win=win, 
-                    w=w,
-                    h=h,
-                    params={'g': (g,0,-10),
-                            'fr': (fr,0,10),
-                            'fj': (fj, 0.8,1.1),
-                            'fw': (fw, 0, 1)})
+        if play:
+            menu = Menu(win=self.win, 
+                        w=self.w,
+                        h=self.h,
+                        params={'g': (g,0,-10),
+                                'fr': (fr,0,10),
+                                'fj': (fj, 0.8,1.1),
+                                'fw': (fw, 0, 1)})
 
 
         #######################
@@ -125,10 +122,10 @@ class Pendulum():
         # for tick in range(ticks):
         while True:
             # delta T = 40 ms -> 25fps
-            pygame.time.delay(40 * _play)        
+            pygame.time.delay(40 * play)        
 
             # reset screen
-            win.fill(cb)
+            self.win.fill(cb)
 
             ##############
             ### NN IOs ###
@@ -144,6 +141,17 @@ class Pendulum():
             # angular velocity
             angular_vel = float(o0) / np.pi
 
+            # # all [0,1] or close
+            # # normalized distance from A to center, [-1, 1]
+            # center_dist = (a0 - r1[0]) / rdx
+            # # normalized unit distances from A to B, [-1, 1]
+            # ball_dx = (float(b0) - a0) / ra
+            # ball_dy = (float(b1) - a1) / ra
+            # # horizontal velocity of A / 100
+            # horizontal_vel = float(vax) / 100
+            # # angular velocity
+            # angular_vel = float(o0) / np.pi
+
             param_idx = 0
 
             for event in pygame.event.get():
@@ -154,9 +162,9 @@ class Pendulum():
             #################################
             ### input/NN response updates ###
             #################################
-
-            if _play:
+            if play:
                 g, fr, fj, fw = menu.update()
+            if not nn:
                 keys = pygame.key.get_pressed()
                 left = keys[pygame.K_LEFT]
                 right = keys[pygame.K_RIGHT]
@@ -227,21 +235,21 @@ class Pendulum():
             b0 = a0 - int(ra * np.cos(o0))
             b1 = a1 - int(ra * np.sin(o0))
             # fitness
-            win.blit(font.render('fitness={}'.format(fitness), True, (0,255,0)), fitness_loc)
+            self.win.blit(self.font.render('fitness={}'.format(fitness), True, (0,255,0)), fitness_loc)
             # rail
-            pygame.draw.line(win, clg, r1, r2, 3)
+            pygame.draw.line(self.win, clg, r1, r2, 3)
             # a
-            pygame.draw.circle(win, cdg, (int(a0), a1), rb)
+            pygame.draw.circle(self.win, cdg, (int(a0), a1), rb)
             # b
-            pygame.draw.circle(win, cdg, (int(b0), b1), rb)
+            pygame.draw.circle(self.win, cdg, (int(b0), b1), rb)
             # # arm
-            pygame.draw.line(win, cdg, (a0, a1), (b0, b1), 5)
+            pygame.draw.line(self.win, cdg, (a0, a1), (b0, b1), 5)
 
             pygame.display.update() 
 
-            if not _play:
+            fitness += a1-b1
+            if not play:
                 ticks -= 1
                 if not ticks:
-                    pygame.quit()
                     return fitness
 

@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+
 from display import Menu
 from model import Seq
 from pop import Pop
@@ -18,11 +19,16 @@ def main():
     # pop = np.random.random((popsize, n_weights))
 
     p = Pendulum(model=model)
+    # ind = np.load('logs/6900.npy')
+    # p.nn(train=False, ind=ind)
 
-    pop = Pop(popsize=10,
+    pop = Pop(popsize=50,
                 model=model,
-                ngen=2,
-                elitesize=0.1)
+                ngen=100,
+                lr=2e-2,
+                elitesize=0.2,
+                weight_domain=[-1,1],
+                seed_arr=None)
 
     fitness_fn = lambda ind: p.nn(train=True, ind=ind)
     pop.evolve(fitness_fn=fitness_fn, multiprocess=True)
