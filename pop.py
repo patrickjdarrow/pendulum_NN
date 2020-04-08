@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn
+import pickle
 import multiprocessing
+from multiprocessing import Pool
 
 from debug import db
 
@@ -13,16 +15,12 @@ np.random.seed(1)
 class Model():
   def __init__(self,
                n_params):
-    self.n_params = np.zeros(n_params)
-  
-  @property
-  def get_weights(self):
-    return self.n_params
+    self.n_params = n_params
 
 class Pop():
   def __init__(self,
                popsize,
-               model,
+               n_traits,
                ngen,
                lr = 1.0,
                elitesize=0.1,
@@ -32,7 +30,8 @@ class Pop():
                ):
     '''
     #TODO
-      1) better logging
+      1) better mating scheme
+      2) better logging
     '''
 
     # Set population parameters
@@ -48,22 +47,22 @@ class Pop():
 
     # Initialize population with n_traits
     self.weight_domain = weight_domain
-    self.n_traits = np.sum([np.prod(layer.shape) for layer in model.get_weights()])
+    self.n_traits = n_traits
     self.pop = self._reset_pop()
     self.scores = np.ndarray(self.popsize)
     self.fittest = None
     self.fittest_score = None
 
   def _reset_pop(self):
-    self.n_elites = int(self.popsize * self.elitesize); assert self.n_elites >=2
-    self.n_nonelites = self.popsize - self.n_elites; assert self.n_nonelites >=1
+    self.n_elites = int(self.popsize * self.elitesize); #assert self.n_elites >=2
+    self.n_nonelites = self.popsize - self.n_elites; #assert self.n_nonelites >=1
     self.generation = 0
     r = np.ptp(self.weight_domain)
     m = np.mean(self.weight_domain)
     pop = r * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + m
     if self.seed_arr:
       print(f'Seeding: {self.seed_arr}')
-      pop[0] = np.load(f'checkpoints/{self.seed_arr}')
+      pop[0] = np.load(f'checkpoints/{str(self.seed_arr)}.npy')
     return pop
 
   # Test surfaces: 
@@ -79,12 +78,20 @@ class Pop():
     return ((np.power(np.cos(.2 * sqsum), 2) + 2)) * np.exp(-0.01*sqsum) 
 
   # Update population scores in place and order population
-  def _update_scores(self, fitness_fn=None, multiprocess=False):
+  def _update_scores(self, fitness_fn=None, sequential=False, multiprocess=False):
     if fitness_fn:
       if multiprocess:
-        # p = multiprocessing.Pool(multiprocessing.cpu_count())
-        # self.scores = np.array(p.map(fitness_fn, [ind for ind in self.pop]))
-        self.scores = np.array([fitness_fn(ind) for ind in self.pop])
+        scores = []
+        print(self.scores)
+        print(scores)
+        p = Pool(processes=multiprocessing.cpu_count()-1)
+        res = p.apply_async(fitness_fn, [ind for ind in self.pop])
+        scores.append(res.get(timeout=5))
+        self.scores = np.array(scores)
+        print(self.scores)
+        print(scores)
+      elif sequential:
+        self.scores = np.array([fitness_fn(ind) for ind in self.pop])        
       else:
         self.scores = fitness_fn(self.pop)
     else:
@@ -98,13 +105,13 @@ class Pop():
       if self.scores[-1] > self.fittest_score:
         self.fittest_score = self.scores[-1]
         self.fittest = self.pop[-1]
-        print(f'Saving: {self.fittest_score}.npy')
-        np.save(f'checkpoints/{self.fittest_score}', self.fittest)
+        print(f'Saving: {int(self.fittest_score)}.npy')
+        np.save(f'checkpoints/{int(self.fittest_score)}', self.fittest)
     else:
       self.fittest_score = self.scores[-1]
       self.fittest = self.pop[-1]
-      print(f'Saving: {self.fittest_score}.npy')
-      np.save(f'checkpoints/{self.fittest_score}', self.fittest)
+      print(f'Saving: {int(self.fittest_score)}.npy')
+      np.save(f'checkpoints/{int(self.fittest_score)}', self.fittest)
 
   @property
   def get_scores(self):
@@ -113,6 +120,7 @@ class Pop():
   # TODO: assign replacement scheme for each strat
   def evolve(self,
             fitness_fn=None,
+            sequential=False,
             multiprocess=False,
             plot_fitness=False,):
 
@@ -120,7 +128,7 @@ class Pop():
     averages = []
 
     for gen in range(1, self.ngen+1):
-      self._update_scores(fitness_fn=fitness_fn, multiprocess=multiprocess)
+      self._update_scores(fitness_fn=fitness_fn, sequential=sequential, multiprocess=multiprocess)
       
       # if plot_fitness:
       #   plt.scatter([self.generation]*self.popsize, self.scores)
@@ -137,10 +145,13 @@ class Pop():
       
       # Mutate population with noise = lr*std(axis)
       #TODO: replace std calculation with np.along_axis
-      std = np.array([self.lr * np.std(self.pop[:-1,i]) for i in range(self.n_traits)])
+      # std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
+      # self.pop[:] += std * (np.random.random((self.popsize, self.n_traits)) - 0.5)
+      std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
       self.pop[:-1] += std * (np.random.random((self.popsize-1, self.n_traits)) - 0.5)
 
-      print(f'ngen: {gen}, fittest: {np.max(self.scores)}, avg: {np.mean(self.scores)}')
+      print(f'ngen: {gen}, fittest: {int(np.max(self.scores))},\
+              median: {int(np.median(self.scores))}, worst elite: {int(self.scores[-self.n_elites])}')
       self.generation += 1
 
       #Logging
@@ -182,13 +193,10 @@ class Pop():
     plt.scatter(np.average(xs), np.average(ys), c='r', linewidth=3)
     plt.scatter(xs[-1], ys[-1], c='cyan')
 
-
-
-
 # model = Model(n_params=2)
 
 # a = Pop(popsize=10000,
-#         model=model,
+#         n_traits=model.n_params,
 #         ngen=25,
 #         elitesize=0.5,
 #         early_stop=True)
