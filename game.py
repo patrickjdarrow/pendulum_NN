@@ -101,7 +101,7 @@ class Pendulum():
         # friction at the join of a (fractional angular velocity retention)
         fj = 0.991
         # gravity
-        g = - 4
+        g = -3
 
         #################
         ### Test vars ###
@@ -159,34 +159,32 @@ class Pendulum():
             # angular_vel = float(o0) / np.pi
 
 
+            # # all [0,1] or close
+            # # normalized distance from A to center, [0, 1]
+            # center_dist = (a0 - r1[0]) / rdx - 1
+            # center_dist_pos = float(center_dist>0)
+            # center_dist_neg = float(center_dist<0)
+            # center_dist = np.abs(center_dist)
             # all [0,1] or close
-            # normalized distance from A to center, [-1, 1]
-            center_dist = (a0 - r1[0]) / rdx - 1
-
-            center_dist_pos = float(center_dist>0)
-            center_dist_neg = float(center_dist<0)
-            center_dist = np.abs(center_dist)
-            # normalized unit distances from A to B, [-1, 1]
+            # normalized distance from A to center, [0, 1]
+            dist_from_right = (r2[0] - a0) / (2*rdx)
+            dist_from_left = (a0 - r1[0]) / (2*rdx)
+            # normalized unit distances from A to B, [0, 1]
             ball_dx = (float(b0) - a0) / ra
-
             ball_dx_pos = ball_dx>0
             ball_dx_neg = ball_dx<0
             ball_dx = np.abs(ball_dx)
             ball_dy = (a1 - float(b1) + 75) / ra
             # horizontal velocity of A / 100
             horizontal_vel = float(vax) / 100
-
             vax_pos = horizontal_vel>0
             vax_neg = horizontal_vel<0
             horizontal_vel = np.abs(horizontal_vel)
             # angular velocity
             angular_vel = float(o0) / np.pi
-
             angular_vel_pos = angular_vel>0
             angular_vel_neg = angular_vel<0
             angular_vel = np.abs(angular_vel)
-
-            param_idx = 0
 
 
             #################################
@@ -204,19 +202,18 @@ class Pendulum():
                 #                             ball_dx,
                 #                             horizontal_vel,
                 #                             angular_vel]])
-                inputs = np.array([[center_dist,
-                                        center_dist_pos,
-                                        center_dist_neg,
-                                        ball_dx,
-                                        ball_dx_pos,
-                                        ball_dx_neg,
-                                        ball_dy,
-                                        horizontal_vel,
-                                        vax_pos,
-                                        vax_neg,
-                                        angular_vel,
-                                        angular_vel_pos,
-                                        angular_vel_neg]])
+                inputs = np.array([[dist_from_right,
+                                    dist_from_left,
+                                    ball_dx,
+                                    ball_dx_pos,
+                                    ball_dx_neg,
+                                    ball_dy,
+                                    horizontal_vel,
+                                    vax_pos,
+                                    vax_neg,
+                                    angular_vel,
+                                    angular_vel_pos,
+                                    angular_vel_neg]])
 
                 out = self.model.pred(inputs)
                 left = out==0
@@ -259,9 +256,6 @@ class Pendulum():
                 dv += vax 
             else:
                 a0 += vax
-            # update B
-            b0 = a0 - int(ra * np.cos(o0))
-            b1 = a1 - int(ra * np.sin(o0))
 
             #######################
             ### angular updates ###
@@ -294,7 +288,7 @@ class Pendulum():
                 pygame.display.update() 
 
             # fitness += a1-b1+np.exp((a1-b1)/25)
-            fitness += np.exp((a1-b1+150)/55)
+            fitness += np.exp((a1-b1+150)/55) + (a1-b1) * 0.1
             if not play:
                 ticks -= 1
                 if not ticks:

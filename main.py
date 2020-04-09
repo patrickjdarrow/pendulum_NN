@@ -16,8 +16,8 @@ def main():
     ###########################
 
     model = Seq()
-    p = Pendulum(model=model, sim=True)
-    p.play()
+    p = Pendulum(model=model, sim=False)
+    # p.play()
 
     # ind = np.load('checkpoints/7230.npy')
     # p.nn(train=False, ind=ind)
@@ -25,10 +25,10 @@ def main():
     pop = Pop(popsize=100,
                 n_traits=n_traits,
                 ngen=10000,
-                lr=.1,
+                lr=.15,
                 elitesize=0.1,
                 weight_domain=[-1,1],
-                seed_arr=26008)
+                seed_arr=None)
 
     pop.evolve(fitness_fn=lambda ind: p.nn(train=True, ind=ind), sequential=True)
 

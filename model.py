@@ -9,9 +9,9 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense, LeakyReLU
 
-input_dim = 13
-n_neurons = 5
-hidden = 2
+input_dim = 12
+n_neurons = 200
+hidden = 1
 output_dim = 2
 
 n_traits = (hidden>0) * input_dim * n_neurons + (hidden > 1) *\
@@ -41,6 +41,7 @@ class Seq(Sequential):
 
 		# output layer
 		self.add(Dense(output_dim, activation='softmax'))
+		self.summary()
 
 	def pred(self, inputs):
 		out = self.predict(inputs, verbose=0)[0]

@@ -61,8 +61,10 @@ class Pop():
     m = np.mean(self.weight_domain)
     pop = r * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + m
     if self.seed_arr:
-      print(f'Seeding: {self.seed_arr}')
       pop[0] = np.load(f'checkpoints/{str(self.seed_arr)}.npy')
+      print(f'Seeding: {self.seed_arr}.npy')
+    else:
+      print('Using no seed')
     return pop
 
   # Test surfaces: 
@@ -81,6 +83,7 @@ class Pop():
   def _update_scores(self, fitness_fn=None, sequential=False, multiprocess=False):
     if fitness_fn:
       if multiprocess:
+        #TODO: 
         scores = []
         print(self.scores)
         print(scores)
@@ -150,8 +153,8 @@ class Pop():
       std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
       self.pop[:-1] += std * (np.random.random((self.popsize-1, self.n_traits)) - 0.5)
 
-      print(f'ngen: {gen}, fittest: {int(np.max(self.scores))},\
-              median: {int(np.median(self.scores))}, worst elite: {int(self.scores[-self.n_elites])}')
+      print(f'ngen: {gen}, fittest: {int(np.max(self.scores))}, ',
+            f'median: {int(np.median(self.scores))}, worst elite: {int(self.scores[-self.n_elites])}')
       self.generation += 1
 
       #Logging
