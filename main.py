@@ -15,18 +15,23 @@ def main():
     ### Model and evolution ###
     ###########################
 
-    model = Seq()
-    # p = Pendulum(model=model, sim=False)
-
-    p = Pendulum(model=model, sim=True)
+    # Play it yourself
+    # p = Pendulum(sim=True)
     # p.play()
-    ind = np.load('checkpoints/161833.npy')
-    p.nn(train=False, ind=ind)
 
-    pop = Pop(popsize=100,
+    # Let the NN play it
+    # model = Seq()
+    # p = Pendulum(model=model, sim=True)
+    # ind = np.load('checkpoints/demo/161833.npy')
+    # p.nn(train=False, ind=ind)
+
+    # Train a NN
+    model = Seq()
+    p = Pendulum(model=model, sim=False)
+    pop = Pop(popsize=1000,
                 n_traits=model.n_params,
                 ngen=10000,
-                lr=.0005,
+                lr=.05,
                 elitesize=0.01,
                 weight_domain=[-1,1],
                 seed_arr=161833)
