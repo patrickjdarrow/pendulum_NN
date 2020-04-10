@@ -30,8 +30,11 @@ class Pop():
                ):
     '''
     #TODO
-      1) better mating scheme
-      2) better logging
+      1) MultiProcessing
+      2) Docstrings
+      3) More evolution schemes
+
+
     '''
 
     # Set population parameters
@@ -39,6 +42,8 @@ class Pop():
     self.ngen = ngen
     self.lr = lr
     self.elitesize = elitesize
+    self.n_elites = int(self.popsize * self.elitesize); assert self.n_elites > 0
+    self.n_nonelites = self.popsize - self.n_elites; assert self.n_nonelites > 0
     self.early_stop = early_stop
     self.seed_arr = seed_arr
 
@@ -54,15 +59,17 @@ class Pop():
     self.fittest_score = None
 
   def _reset_pop(self):
-    self.n_elites = int(self.popsize * self.elitesize); #assert self.n_elites >=2
-    self.n_nonelites = self.popsize - self.n_elites; #assert self.n_nonelites >=1
     self.generation = 0
     r = np.ptp(self.weight_domain)
     m = np.mean(self.weight_domain)
     pop = r * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + m
     if self.seed_arr:
-      pop[0] = np.load(f'checkpoints/{str(self.seed_arr)}.npy')
+      pop[-1] = np.load(f'checkpoints/{str(self.seed_arr)}.npy')
       print(f'Seeding: {self.seed_arr}.npy')
+      if self.n_elites == 1:
+        for i in range(self.popsize-1):
+          pop[i] = pop[-1]
+        pop[:-1] += np.random.normal(loc=0.0, scale = self.lr, size=(self.popsize-1, self.n_traits))
     else:
       print('Using no seed')
     return pop
@@ -139,22 +146,25 @@ class Pop():
       #   fittest.append(np.max(self.scores)) 
     
       # Replace the nonelite
-      elites = self.pop[-self.n_elites:]
       self.pop[:-self.n_elites] = np.array(
-                                  [np.random.choice(elites[:,i],
+                                  [np.random.choice(self.pop[-self.n_elites:][:,i],
                                                     (self.n_nonelites)) 
                                   for i in range(self.n_traits)]
-                                  ).reshape((self.n_nonelites, self.n_traits))
+                                  ).T.reshape((self.n_nonelites, self.n_traits))
       
       # Mutate population with noise = lr*std(axis)
       #TODO: replace std calculation with np.along_axis
       # std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
       # self.pop[:] += std * (np.random.random((self.popsize, self.n_traits)) - 0.5)
-      std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
-      self.pop[:-1] += std * (np.random.random((self.popsize-1, self.n_traits)) - 0.5)
+      if self.n_elites > 1:
+        std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
+        self.pop[:-1] += std * (np.random.random((self.popsize-1, self.n_traits)) - 0.5)
+      else:
+        self.pop[:-1] += np.random.normal(loc=0.0, scale = self.lr, size=(self.popsize-1, self.n_traits))
 
       print(f'ngen: {gen}, fittest: {int(np.max(self.scores))}, ',
-            f'median: {int(np.median(self.scores))}, worst elite: {int(self.scores[-self.n_elites])}')
+            f'median: {int(np.median(self.scores))}, worst elite: {int(self.scores[-self.n_elites])},',
+            f'mean: {int(np.mean(self.scores))}')
       self.generation += 1
 
       #Logging

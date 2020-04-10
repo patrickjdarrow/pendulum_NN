@@ -8,17 +8,6 @@ import numpy as np
 
 from keras.models import Sequential
 from keras.layers import Dense, LeakyReLU
-
-input_dim = 12
-n_neurons = 200
-hidden = 1
-output_dim = 2
-
-n_traits = (hidden>0) * input_dim * n_neurons + (hidden > 1) *\
-			(n_neurons ** hidden) + n_neurons * output_dim +\
-			n_neurons * hidden + output_dim + (hidden==0) *\
-			input_dim * output_dim
-
 class Seq(Sequential):
 	def __init__(self):
 		super(Seq, self).__init__()
@@ -35,13 +24,13 @@ class Seq(Sequential):
 		# self.add(Dense(n_neurons, activation='tanh'))
 
 		# hidden layers
-		self.add(Dense(n_neurons, input_dim=input_dim, activation='relu'))
-		for i in range(hidden-1):
-			self.add(Dense(n_neurons, activation='relu'))
+		self.add(Dense(100, input_dim=12, activation='relu'))
+		self.add(Dense(20, activation='relu'))
 
 		# output layer
-		self.add(Dense(output_dim, activation='softmax'))
+		self.add(Dense(2, activation='softmax'))
 		self.summary()
+		self.n_params = self.count_params()
 
 	def pred(self, inputs):
 		out = self.predict(inputs, verbose=0)[0]

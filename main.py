@@ -7,7 +7,7 @@ from display import Menu
 from pop import Pop
 from debug import db
 from game import Pendulum
-from model import Seq, n_traits
+from model import Seq
 
 def main():
 
@@ -16,19 +16,20 @@ def main():
     ###########################
 
     model = Seq()
-    p = Pendulum(model=model, sim=False)
-    # p.play()
+    # p = Pendulum(model=model, sim=False)
 
-    # ind = np.load('checkpoints/7230.npy')
-    # p.nn(train=False, ind=ind)
+    p = Pendulum(model=model, sim=True)
+    # p.play()
+    ind = np.load('checkpoints/161833.npy')
+    p.nn(train=False, ind=ind)
 
     pop = Pop(popsize=100,
-                n_traits=n_traits,
+                n_traits=model.n_params,
                 ngen=10000,
-                lr=.15,
-                elitesize=0.1,
+                lr=.0005,
+                elitesize=0.01,
                 weight_domain=[-1,1],
-                seed_arr=None)
+                seed_arr=161833)
 
     pop.evolve(fitness_fn=lambda ind: p.nn(train=True, ind=ind), sequential=True)
 

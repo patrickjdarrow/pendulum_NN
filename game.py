@@ -50,7 +50,7 @@ class Pendulum():
 
         return self.play(play=not train, nn=True)
 
-    def play(self, play=True, nn=False, ticks=250):
+    def play(self, play=True, nn=False, ticks=1000):
 
         fitness = 0
         fitness_loc = (0.9*self.w, 0.05*self.h)
@@ -119,7 +119,7 @@ class Pendulum():
             menu = Menu(win=self.win, 
                         w=self.w,
                         h=self.h,
-                        params={'g': (g,0,-10),
+                        params={'g': (g,-10, 0),
                                 'fr': (fr,0,10),
                                 'fj': (fj, 0.8,1.1),
                                 'fw': (fw, 0, 1)})
