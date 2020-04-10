@@ -287,8 +287,12 @@ class Pendulum():
 
                 pygame.display.update() 
 
-            # fitness += a1-b1+np.exp((a1-b1)/25)
-            fitness += np.exp((a1-b1+150)/55) + (a1-b1) * 0.1
+            # Fitness function
+            # 1) Exponential reward for pendulum height
+            # 2) Linear punishment for pendulum height
+            # 3) Linear punishment for pendulum location 
+            fitness += np.exp((a1-b1+150)/55) + (0.1 * (a1-b1)) - (0.1 * np.abs(a0 - self.w/2))
+
             if not play:
                 ticks -= 1
                 if not ticks:
