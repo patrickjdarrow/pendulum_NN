@@ -50,7 +50,7 @@ class Pendulum():
 
         return self.play(play=not train, nn=True)
 
-    def play(self, play=True, nn=False, ticks=1000):
+    def play(self, play=True, nn=False, ticks=250):
 
         fitness = 0
         fitness_loc = (0.9*self.w, 0.05*self.h)

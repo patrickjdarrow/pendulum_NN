@@ -128,6 +128,11 @@ class Pop():
     return self.scores
 
   # TODO: assign replacement scheme for each strat
+    #1) replace std calculation with np.along_axis
+    #2) parameterize preserve fittest
+    #3) better logging
+    #4) parameterize example code
+    #5) implement early stopping
   def evolve(self,
             fitness_fn=None,
             sequential=False,
@@ -153,25 +158,18 @@ class Pop():
                                   ).T.reshape((self.n_nonelites, self.n_traits))
       
       # Mutate population with noise = lr*std(axis)
-      #TODO: replace std calculation with np.along_axis
       # std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
       # self.pop[:] += std * (np.random.random((self.popsize, self.n_traits)) - 0.5)
       if self.n_elites > 1:
         std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
-        self.pop[:-1] += std * (np.random.random((self.popsize-1, self.n_traits)) - 0.5)
       else:
-        self.pop[:-1] += np.random.normal(loc=0.0, scale = self.lr, size=(self.popsize-1, self.n_traits))
+        std = self.lr
+      self.pop[:-1] += np.random.normal(loc=0.0, scale = std, size=(self.popsize-1, self.n_traits))
 
       print(f'ngen: {gen}, fittest: {int(np.max(self.scores))}, ',
             f'median: {int(np.median(self.scores))}, worst elite: {int(self.scores[-self.n_elites])},',
             f'mean: {int(np.mean(self.scores))}')
       self.generation += 1
-
-      #Logging
-
-
-      # TODO:
-      # implement early stopping
 
     # Lay over average and fittest lines
     # if plot_fitness:
