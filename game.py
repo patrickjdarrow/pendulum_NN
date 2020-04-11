@@ -26,33 +26,38 @@ class Pendulum():
 
     def nn(self, train=False, ind=None):
         '''
-        - Plays the game with a neural net player
+        Plays the game with a neural net player
         
         - Args
             train: If train, return the fitness score after a number of game ticks, \
                     else play forever
 
         Returns:
-            np array of fitness scores
+            fitness score
         '''
-
-        # import tensorflow as tf
-        # # tf.logging.set_verbosity(tf.logging.ERROR)
-        # self.model = Seq()
-        
-        # if self.sim == False:
-        #     from keras.backend.tensorflow_backend import set_session
-        #     config = tf.ConfigProto()
-        #     config.gpu_options.per_process_gpu_memory_fraction = 1/9
-        #     set_session(tf.Session(config=config))
 
         self.model._set_weights(ind)
 
         return self.play(play=not train, nn=True)
 
     def play(self, play=True, nn=False, ticks=250):
+        '''
+        The main loop for simulated or non-simulated playing
+        
+        - Args
+            play (bool):
+                False limits the time played to the provided number of game ticks
+            nn (bool):
+                True uses nn for simulation inputs. Use True during training or model testing
+            ticks (int):
+                Number of game ticks used when play=False
+
+        Returns:
+            Fitness score if play=False, else continues until closed
+        '''
 
         fitness = 0
+        # Where to display fitness score
         fitness_loc = (0.9*self.w, 0.05*self.h)
 
         ##############
@@ -75,15 +80,16 @@ class Pendulum():
         o0 = -np.pi/2
         # angular velocity, delta theta
         do = 0
+        # rail length and endpoints
+        rdx = int(self.w/3)
+        r1 = (int(self.w/2 - rdx), int(self.h/2 - ra))
+        r2 = (int(self.w/2 + rdx), int(self.h/2 - ra))
         # ball end coordinates (0: x, 1: y)
-        a0 = int(self.w/2)
+        # a0 = int(self.w/2) # use this value for centered start
+        a0 = np.random.choice(range(r1[0], r2[0])) # use this value for random start
         a1 = int(self.h/2 - ra)
         b0 = a0 - int(ra * np.cos(o0))
         b1 = a1 - int(ra * np.sin(o0))
-        # rail length and endpoints
-        rdx = int(self.w/3)
-        r1 = (int(self.w/2 - rdx), a1)
-        r2 = (int(self.w/2 + rdx), a1)
 
         ################
         ### Movement ###
@@ -96,20 +102,12 @@ class Pendulum():
         adv = 0.0035
         # friction due to wall (inelastic collision)
         fw = 0.45
-        # friction due to rail (deceleration constant)
+        # friction due to rail (horizonatal deceleration constant)
         fr = 2
-        # friction at the join of a (fractional angular velocity retention)
+        # friction at the pendulum joint (fractional angular velocity retention)
         fj = 0.991
-        # gravity
+        # gravitational deceleration
         g = -3
-
-        #################
-        ### Test vars ###
-        #################
-
-        #TODO: get rid of globals
-        rmin = np.sqrt( (a0 - b0)**2 + (a1 - b1)**2)
-        rmax = rmin
 
         #################
         ### Load Menu ###
@@ -129,9 +127,6 @@ class Pendulum():
         ### game state loop ###
         #######################
 
-        # scores = np.zeros((popsize))
-
-        # for tick in range(ticks):
         while True:
 
             if self.sim:
@@ -148,24 +143,6 @@ class Pendulum():
             ### NN IOs ###
             ##############
 
-            # # normalized distance from A to center, [-1, 1]
-            # center_dist = (a0 - r1[0]) / rdx - 1
-            # # normalized unit distances from A to B, [-1, 1]
-            # ball_dx = (float(b0) - a0) / ra
-            # ball_dy = (float(b1) - a1) / ra
-            # # horizontal velocity of A / 100
-            # horizontal_vel = float(vax) / 100
-            # # angular velocity
-            # angular_vel = float(o0) / np.pi
-
-
-            # # all [0,1] or close
-            # # normalized distance from A to center, [0, 1]
-            # center_dist = (a0 - r1[0]) / rdx - 1
-            # center_dist_pos = float(center_dist>0)
-            # center_dist_neg = float(center_dist<0)
-            # center_dist = np.abs(center_dist)
-            # all [0,1] or close
             # normalized distance from A to center, [0, 1]
             dist_from_right = (r2[0] - a0) / (2*rdx)
             dist_from_left = (a0 - r1[0]) / (2*rdx)
@@ -192,16 +169,13 @@ class Pendulum():
             #################################
             if play:
                 g, fr, fj, fw = menu.update()
-            if not nn:
+            if self.sim:
                 keys = pygame.key.get_pressed()
                 left = keys[pygame.K_LEFT]
                 right = keys[pygame.K_RIGHT]
-            else:
-                # inputs = np.array([[center_dist,
-                #                             ball_dy,
-                #                             ball_dx,
-                #                             horizontal_vel,
-                #                             angular_vel]])
+                if keys[pygame.K_r]:
+                    self.play(play, nn)
+            if nn:
                 inputs = np.array([[dist_from_right,
                                     dist_from_left,
                                     ball_dx,
@@ -261,18 +235,25 @@ class Pendulum():
             ### angular updates ###
             #######################
 
+            # Tune the impact to angular acceleration caused by player/NN movements 
             dv *= adv
-            do = fj * do + np.arctan2(g * np.cos(o0), ra) - dv * np.sin(o0)
+            # Store the net angular velocity
+            # 1st component: last time steps angular velocity, reduced by friction at the joint
+            # 2nd: angular acceleration due to gravity
+            # 3rd: angular acceleration due to movement
+            do = (fj * do) + np.arctan2(g * np.cos(o0), ra) - (dv * np.sin(o0))
+            # Adjust theta naught accordingly
             o0 += do
 
             ######################
             ### pygame updates ###
             ######################
 
-            # update B
+            # Lastly, we update B 
             b0 = a0 - int(ra * np.cos(o0))
             b1 = a1 - int(ra * np.sin(o0))
 
+            # Draw simulation components 
             if self.sim:
                 # fitness
                 self.win.blit(self.font.render(f'fitness={int(fitness)}', True, (0,255,0)), fitness_loc)
@@ -291,7 +272,7 @@ class Pendulum():
             # 1) Exponential reward for pendulum height
             # 2) Linear punishment for pendulum height
             # 3) Linear punishment for pendulum location 
-            fitness += np.exp((a1-b1+150)/55) + (0.1 * (a1-b1)) - (0.1 * np.abs(a0 - self.w/2))
+            fitness += np.exp((a1-b1+150)/55) + (0.15 * (a1-b1)) - (0.2 * np.abs(a0 - self.w/2))
 
             if not play:
                 ticks -= 1

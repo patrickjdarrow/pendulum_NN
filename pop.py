@@ -8,7 +8,6 @@ from multiprocessing import Pool
 from debug import db
 
 plt.rcParams['figure.figsize'] = 16, 13
-
 np.random.seed(1)
 
 # Dummy model class
@@ -17,6 +16,13 @@ class Model():
                n_params):
     self.n_params = n_params
 
+    '''
+    #TODO
+      1) MultiProcessing
+      2) Docstrings
+      3) More evolution schemes
+
+    '''
 class Pop():
   def __init__(self,
                popsize,
@@ -28,14 +34,6 @@ class Pop():
                early_stop=False,
                seed_arr=None,
                ):
-    '''
-    #TODO
-      1) MultiProcessing
-      2) Docstrings
-      3) More evolution schemes
-
-
-    '''
 
     # Set population parameters
     self.popsize = popsize
@@ -64,6 +62,7 @@ class Pop():
     m = np.mean(self.weight_domain)
     pop = r * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + m
     if self.seed_arr:
+      self.fittest = self.seed_arr
       pop[-1] = np.load(f'checkpoints/{str(self.seed_arr)}.npy')
       print(f'Seeding: {self.seed_arr}.npy')
       if self.n_elites == 1:
@@ -90,7 +89,7 @@ class Pop():
   def _update_scores(self, fitness_fn=None, sequential=False, multiprocess=False):
     if fitness_fn:
       if multiprocess:
-        #TODO: 
+        #TODO: finish multiprocessing of model prediction
         scores = []
         print(self.scores)
         print(scores)
@@ -133,6 +132,8 @@ class Pop():
     #3) better logging
     #4) parameterize example code
     #5) implement early stopping
+    #6) separate plotting into it's own module
+
   def evolve(self,
             fitness_fn=None,
             sequential=False,
@@ -157,7 +158,8 @@ class Pop():
                                   for i in range(self.n_traits)]
                                   ).T.reshape((self.n_nonelites, self.n_traits))
       
-      # Mutate population with noise = lr*std(axis)
+      # Mutate population (except the fittest) with noise = lr*std(axis)
+      # Use the 2 lines below to also mutate the fittest individual 
       # std = np.array([self.lr * np.std(self.pop[:,i]) for i in range(self.n_traits)])
       # self.pop[:] += std * (np.random.random((self.popsize, self.n_traits)) - 0.5)
       if self.n_elites > 1:
@@ -204,10 +206,12 @@ class Pop():
     plt.scatter(np.average(xs), np.average(ys), c='r', linewidth=3)
     plt.scatter(xs[-1], ys[-1], c='cyan')
 
-# model = Model(n_params=2)
+# model = Model(n_params=n_params)
 
-# a = Pop(popsize=10000,
+# a = Pop(popsize=popzise,
 #         n_traits=model.n_params,
-#         ngen=25,
+#         ngen=ngen,
 #         elitesize=0.5,
 #         early_stop=True)
+
+# a.evolve()
