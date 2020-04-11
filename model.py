@@ -9,23 +9,12 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense, LeakyReLU
 class Seq(Sequential):
-    '''
-    Wraps Keras Sequential model for ease of use
+	'''
+	Wraps Keras Sequential model for ease of use
 
-    '''
+	'''
 	def __init__(self):
 		super(Seq, self).__init__()
-
-		# # hidden layers
-		# self.add(Dense(100, input_dim=5, activation='tanh'))
-		# self.add(Dense(50, activation='tanh'))
-		# self.add(Dense(10, activation='tanh'))
-
-		# # hidden layers
-		# n_neurons = 5
-		# self.add(Dense(n_neurons, input_dim=5, activation='tanh'))
-		# # self.add(Dense(n_neurons, activation='tanh'))
-		# self.add(Dense(n_neurons, activation='tanh'))
 
 		# hidden layers
 		self.add(Dense(100, input_dim=12, activation='relu'))
@@ -37,16 +26,16 @@ class Seq(Sequential):
 		self.n_params = self.count_params()
 
 	def pred(self, inputs):
-        '''
-        Calls model.predict
-        
-        - Args
-            inputs (array-like):
-            	see game.py for inputs
+		'''
+		Calls model.predict
 
-        Returns:
-            int, 0 for left, 1 for right
-        '''
+		- Args:
+			inputs (array-like):
+				see game.py for inputs
+
+		Returns:
+			int, 0 for left, 1 for right
+		'''
 		out = self.predict(inputs, verbose=0)[0]
 		return np.where(out==np.max(out))[0][0]
 
