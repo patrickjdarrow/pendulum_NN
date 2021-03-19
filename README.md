@@ -1,7 +1,9 @@
 # pendulum_NN
-Evolving neural nets controllers for the inversion and balancing of a pendulum.
+- Evolving neural nets controllers for the inversion and balancing of a pendulum.
 
-![](https://i.gyazo.com/fb60fa265c96b1dfeccb1d16e304f85a.gif)
+Two unique strategies found:
+
+![](https://i.gyazo.com/fb60fa265c96b1dfeccb1d16e304f85a.gif) ![](https://i.gyazo.com/29696354e74c8048c366f08f7b300834.gif)
 
 # Evolutionary algorithms: gradient-free network optimizers
 - Alternative for traditional backpropagation-based parameter update schemes
