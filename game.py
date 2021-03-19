@@ -85,8 +85,8 @@ class Pendulum():
         r1 = (int(self.w/2 - rdx), int(self.h/2 - ra))
         r2 = (int(self.w/2 + rdx), int(self.h/2 - ra))
         # ball end coordinates (0: x, 1: y)
-        # a0 = int(self.w/2) # use this value for centered start
-        a0 = np.random.choice(range(r1[0], r2[0])) # use this value for random start
+        a0 = int(self.w/2) # use this value for centered start
+        # a0 = np.random.choice(range(r1[0], r2[0])) # use this value for random start
         a1 = int(self.h/2 - ra)
         b0 = a0 - int(ra * np.cos(o0))
         b1 = a1 - int(ra * np.sin(o0))
