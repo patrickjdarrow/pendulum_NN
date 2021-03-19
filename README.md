@@ -22,7 +22,7 @@ python main.py
 ```
 
 For nn play:
-- weights defaults to demo weights
+- defaults to 'demo/161833.npy'
 ```
 python main.py --purpose='nn' --weights={weights.npy}
 ```
