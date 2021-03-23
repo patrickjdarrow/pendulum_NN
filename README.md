@@ -24,15 +24,6 @@ For nn training
 python main.py --purpose='train' --pop_size={int} --ngen={int} --lr={float} --elite_size={float} --seed_arr={weights.npy}
 ```
 
-# Evolutionary algorithms: gradient-free network optimizers
-- Alternative for traditional backpropagation-based parameter update schemes
-- Massively parallelizable for large populations
-- Capable of handling high dimensional parameter spaces
-
-A population finds local maxima:
-
-![](https://blog.otoro.net/assets/20171031/rastrigin/simplees.gif)
-
 # Navigation
 
 main.py
@@ -55,6 +46,15 @@ model.py
 
 display.py
 - Customizable PyGame multi-slider menu to experiment during simulation
+
+# Evolutionary algorithms: gradient-free network optimizers
+- Alternative for traditional backpropagation-based parameter update schemes
+- Massively parallelizable for large populations
+- Capable of handling high dimensional parameter spaces
+
+A population finds local maxima:
+
+![](https://blog.otoro.net/assets/20171031/rastrigin/simplees.gif)
 
 ## Resources
 [Visualizing Evolutionary Strategies, David Ha](https://blog.otoro.net/2017/10/29/visual-evolution-strategies/) 
