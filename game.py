@@ -1,9 +1,11 @@
 import pygame
 import numpy as np
+
+from config import *
 from display import Menu
 from model import Seq
 from pop import Pop
-from debug import db
+
 
 class Pendulum():
     '''
@@ -15,7 +17,7 @@ class Pendulum():
         self.model = model
         self.sim = sim
 
-        self.w = int(1500)
+        self.w = int(w)
         self.h = int(self.w/2)
 
         if self.sim:
@@ -56,58 +58,14 @@ class Pendulum():
             Fitness score if play=False, else continues until closed
         '''
 
+        global a0
+        global o0
+        global b0
+        global b1
+        global vax
+        global do
+
         fitness = 0
-        # Where to display fitness score
-        fitness_loc = (0.9*self.w, 0.05*self.h)
-
-        ##############
-        ### Colors ###
-        ##############
-
-        cb = (0, 0, 0)
-        cdg = (252, 252, 252)
-        clg = (70, 70, 70)
-
-        ###########################
-        ### Physical properties ###
-        ###########################
-
-        # arm length
-        ra = int(self.w/10)
-        # ball radii
-        rb = int(self.w/100)
-        # current angle
-        o0 = -np.pi/2
-        # angular velocity, delta theta
-        do = 0
-        # rail length and endpoints
-        rdx = int(self.w/3)
-        r1 = (int(self.w/2 - rdx), int(self.h/2 - ra))
-        r2 = (int(self.w/2 + rdx), int(self.h/2 - ra))
-        # ball end coordinates (0: x, 1: y)
-        a0 = int(self.w/2) # use this value for centered start
-        # a0 = np.random.choice(range(r1[0], r2[0])) # use this value for random start
-        a1 = int(self.h/2 - ra)
-        b0 = a0 - int(ra * np.cos(o0))
-        b1 = a1 - int(ra * np.sin(o0))
-
-        ################
-        ### Movement ###
-        ################
-
-        # velocities
-        vd = 5
-        vax = 0
-        dv = 0
-        adv = 0.0035
-        # friction due to wall (inelastic collision)
-        fw = 0.45
-        # friction due to rail (horizonatal deceleration constant)
-        fr = 2
-        # friction at the pendulum joint (fractional angular velocity retention)
-        fj = 0.991
-        # gravitational deceleration
-        g = -3
 
         #################
         ### Load Menu ###
@@ -117,10 +75,7 @@ class Pendulum():
             menu = Menu(win=self.win, 
                         w=self.w,
                         h=self.h,
-                        params={'g': (g,-10, 0),
-                                'fr': (fr,0,10),
-                                'fj': (fj, 0.8,1.1),
-                                'fw': (fw, 0, 1)})
+                        params=menu_params)
 
 
         #######################
@@ -278,4 +233,3 @@ class Pendulum():
                 ticks -= 1
                 if not ticks:
                     return fitness
-

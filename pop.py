@@ -5,8 +5,6 @@ import pickle
 import multiprocessing
 from multiprocessing import Pool
 
-from debug import db
-
 plt.rcParams['figure.figsize'] = 16, 13
 np.random.seed(1)
 

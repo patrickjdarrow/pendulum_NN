@@ -6,7 +6,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from display import Menu
 from pop import Pop
-from debug import db
 from game import Pendulum
 from model import Seq
 
