@@ -7,7 +7,8 @@ import numpy as np
 # Window height/width
 w = 1500
 h = w/2
-# Where to display fitness score
+
+# Where to display fitness
 fitness_loc = (0.9*w, 0.05*h)
 
 
@@ -75,5 +76,4 @@ menu_params =   {'g': (g,-10, 0),
                 'fj': (fj, 0.8,1.1),
                 'fw': (fw, 0, 1)}
 
-config_locals_dict = locals()
-config_global_dict = globals()
+defaults = (w, h, fitness_loc, cb, cdg, clg, ra, rb, o0, do, rdx, r1, r2, a0, a1, b0, b1, vd, vax, dv, adv, fw, fr, fj, g, menu_params)

@@ -58,18 +58,15 @@ class Pendulum():
             Fitness score if play=False, else continues until closed
         '''
 
-        global a0
-        global o0
-        global b0
-        global b1
-        global vax
-        global do
+        global defaults
+
+        w, h, fitness_loc, cb, cdg, clg, ra, rb, o0, do, rdx, r1, r2, a0, a1, b0, b1, vd, vax, dv, adv, fw, fr, fj, g, menu_params = defaults
 
         fitness = 0
 
-        #################
-        ### Load Menu ###
-        #################
+        ####################
+        ### Menu loading ###
+        ####################
 
         if play:
             menu = Menu(win=self.win, 
@@ -210,8 +207,9 @@ class Pendulum():
 
             # Draw simulation components 
             if self.sim:
-                # fitness
+                # fitness display
                 self.win.blit(self.font.render(f'fitness={int(fitness)}', True, (0,255,0)), fitness_loc)
+
                 # rail
                 pygame.draw.line(self.win, clg, r1, r2, 3)
                 # a

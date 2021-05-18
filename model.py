@@ -1,13 +1,10 @@
-#TODO: 
-'''
-1) Explore architectures
-2) Create logging scheme
-
-'''
 import numpy as np
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"	# Disable GPU
 
 from keras.models import Sequential
-from keras.layers import Dense, LeakyReLU
+from keras.layers import Dense
+
 class Seq(Sequential):
 	'''
 	Wraps Keras Sequential model for ease of use
@@ -16,8 +13,10 @@ class Seq(Sequential):
 	def __init__(self):
 		super(Seq, self).__init__()
 
-		# hidden layers
+		# input layer
 		self.add(Dense(100, input_dim=12, activation='relu'))
+
+		# hidden layer
 		self.add(Dense(20, activation='relu'))
 
 		# output layer

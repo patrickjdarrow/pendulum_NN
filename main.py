@@ -29,7 +29,7 @@ def main():
     # Train a NN
     elif args.purpose == 'train':
         model = Seq()
-        p = Pendulum(model=model, sim=False)
+        p = Pendulum(model=model, sim=args.sim)
         pop = Pop(popsize=args.pop_size,
                     n_traits=model.n_params,
                     ngen=args.ngen,
@@ -55,23 +55,32 @@ def get_args():
                         action='store',
                         help='Numpy file holding serialized model weights from training.')
 
+    parser.add_argument('--sim',
+                        default=False,
+                        action='store',
+                        help='Run with or without a graphical simulation.')
+
     parser.add_argument('--pop_size',
                         default=100,
+                        type=int,
                         action='store',
                         help='Number of individuals in the evolving population.')
 
     parser.add_argument('--ngen',
                         default=10000,
+                        type=int,
                         action='store',
                         help='Number of generations for evolving the population.')
 
     parser.add_argument('--lr',
                         default=.1,
+                        type=float,
                         action='store',
                         help='Learning rate or step size for evolutionary algorithm.')
 
     parser.add_argument('--elite_size',
                         default=.2,
+                        type=float,
                         action='store',
                         help='Percentage of individuals to be considered elite.')
 

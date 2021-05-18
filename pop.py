@@ -1,5 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import os
 import seaborn
 import pickle
 import multiprocessing
@@ -55,20 +56,30 @@ class Pop():
     self.fittest_score = None
 
   def _reset_pop(self):
+
     self.generation = 0
+
+    # Get range and mean
     r = np.ptp(self.weight_domain)
     m = np.mean(self.weight_domain)
+
+    # Dummy population
     pop = r * (np.random.sample((self.popsize, self.n_traits)) - 0.5) + m
+
+    # Reseed
     if self.seed_arr:
-      self.fittest = self.seed_arr
-      pop[-1] = np.load(f'checkpoints/{str(self.seed_arr)}.npy')
       print(f'Seeding: {self.seed_arr}.npy')
+      self.fittest = self.seed_arr
+
+      pop[-1] = np.load(f'checkpoints/{str(self.seed_arr)}.npy')
+
       if self.n_elites == 1:
         for i in range(self.popsize-1):
           pop[i] = pop[-1]
         pop[:-1] += np.random.normal(loc=0.0, scale = self.lr, size=(self.popsize-1, self.n_traits))
+
     else:
-      print('Using no seed')
+      print('Using no seed\n')
     return pop
 
   # Test surfaces: 
@@ -112,13 +123,13 @@ class Pop():
       if self.scores[-1] > self.fittest_score:
         self.fittest_score = self.scores[-1]
         self.fittest = self.pop[-1]
-        print(f'Saving: {int(self.fittest_score)}.npy')
-        np.save(f'checkpoints/{int(self.fittest_score)}', self.fittest)
+        print(f'Saving: {int(self.fittest_score)}_{self.generation}.npy.npy')
+        np.save(f'checkpoints/{int(self.fittest_score)}_{self.generation}.npy', self.fittest)
     else:
       self.fittest_score = self.scores[-1]
       self.fittest = self.pop[-1]
-      print(f'Saving: {int(self.fittest_score)}.npy')
-      np.save(f'checkpoints/{int(self.fittest_score)}', self.fittest)
+      print(f'Saving: {int(self.fittest_score)}_{self.generation}.npy')
+      np.save(f'checkpoints/{int(self.fittest_score)}_{self.generation}.npy', self.fittest)
 
   @property
   def get_scores(self):
@@ -138,10 +149,22 @@ class Pop():
             multiprocess=False,
             plot_fitness=False,):
 
+    print('Evolving...')
+    print(f'\tpopsize: {self.popsize}\n\tngen: {self.ngen}\n\tlr: {self.lr}\n\telitesize: {self.elitesize}\n')
+
+    if os.path.exists('checkpoints'):
+      pass
+    else:
+      print('Creating checkpoints directory...')
+      os.mkdir('checkpoints')
+
     starting_gen = self.generation
     averages = []
 
     for gen in range(1, self.ngen+1):
+
+      print(f'Generation: {gen}')
+
       self._update_scores(fitness_fn=fitness_fn, sequential=sequential, multiprocess=multiprocess)
       
       # if plot_fitness:
@@ -166,7 +189,7 @@ class Pop():
         std = self.lr
       self.pop[:-1] += np.random.normal(loc=0.0, scale = std, size=(self.popsize-1, self.n_traits))
 
-      print(f'ngen: {gen}, fittest: {int(np.max(self.scores))}, ',
+      print(f'fittest: {int(np.max(self.scores))}, ',
             f'median: {int(np.median(self.scores))}, worst elite: {int(self.scores[-self.n_elites])},',
             f'mean: {int(np.mean(self.scores))}')
       self.generation += 1
